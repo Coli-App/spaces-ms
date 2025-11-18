@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsArray, IsEnum, ArrayMinSize } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsArray, IsEnum, ArrayMinSize, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum EstadoEspacio {
@@ -14,7 +14,7 @@ export class CreateSpaceDto {
   })
   @IsString()
   @IsNotEmpty()
-  nombre: string;
+  name: string;
 
   @ApiProperty({
     description: 'Estado del espacio (Activo o Inactivo)',
@@ -22,7 +22,7 @@ export class CreateSpaceDto {
     example: EstadoEspacio.ACTIVO
   })
   @IsEnum(EstadoEspacio)
-  estado: EstadoEspacio;
+  state: EstadoEspacio;
 
   @ApiProperty({
     description: 'Ubicación física del espacio',
@@ -31,7 +31,7 @@ export class CreateSpaceDto {
   })
   @IsString()
   @IsNotEmpty()
-  ubicacion: string;
+  ubication: string;
 
   @ApiProperty({
     description: 'Capacidad máxima de personas',
@@ -39,7 +39,7 @@ export class CreateSpaceDto {
     type: Number
   })
   @IsNumber()
-  capacidad: number;
+  capacity: number;
 
   @ApiProperty({
     description: 'IDs de los deportes permitidos en este espacio',
@@ -49,5 +49,15 @@ export class CreateSpaceDto {
   })
   @IsArray()
   @ArrayMinSize(1)
-  deportes_permitidos: number[];
+  sports: number[];
+
+  @ApiProperty({
+    description: 'URL o ruta de la imagen del espacio',
+    example: '/spaces/cancha-futbol-principal',
+    type: String,
+    required: false
+  })
+  @IsString()
+  @IsOptional()
+  urlpath?: string;
 }
