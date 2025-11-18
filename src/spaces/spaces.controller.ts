@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Headers } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiHeader } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Headers, Param, ParseIntPipe } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiHeader, ApiParam } from '@nestjs/swagger';
 import { SpacesService } from './spaces.service';
 import { CreateSpaceDto } from './dto/create-space.dto';
 import { ActivateSpaceDto } from './dto/activate-space.dto';
@@ -59,6 +59,36 @@ export class SpacesController {
   ): Promise<SpaceResponseDto[]> {
     const token = authHeader?.replace('Bearer ', '');
     return this.spacesService.listSpaces(token);
+  }
+
+  @Get(':id')
+  @ApiOperation({ 
+    summary: 'Obtener un espacio deportivo por ID',
+    description: 'Obtiene la información detallada de un espacio específico incluyendo sus deportes permitidos'
+  })
+  @ApiParam({ 
+    name: 'id', 
+    description: 'ID del espacio a consultar',
+    type: Number,
+    example: 1
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Espacio obtenido exitosamente',
+    type: SpaceResponseDto 
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'Espacio no encontrado' 
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: 'Error interno del servidor' 
+  })
+  async getSpaceById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<SpaceResponseDto> {
+    return this.spacesService.getSpaceById(id);
   }
 
   @Post('activate-space')

@@ -1,8 +1,9 @@
 export class SpaceResponseDto {
   id: number;
-  nombre: string;
-  estado: string;
-  ubicacion: string;
-  capacidad: number;
-  deportes?: Array<{ id: number; nombre: string }>;
+  name: string;
+  state: string;
+  ubication: string;
+  capacity: number;
+  urlpath?: string;
+  sports?: Array<{ id: number; name: string }>;
 }

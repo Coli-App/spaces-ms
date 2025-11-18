@@ -16,14 +16,15 @@ export class SpacesService {
   ) {}
 
   async createSpace(createSpaceDto: CreateSpaceDto): Promise<SpaceResponseDto> {
-    const { deportes_permitidos, ...espacioData } = createSpaceDto;
+    const { sports, ...espacioData } = createSpaceDto;
     const { data: espacio, error: espacioError } = await this.supabase
       .from('espacios')
       .insert({
-        nombre: espacioData.nombre,
-        estado: espacioData.estado,
-        ubicacion: espacioData.ubicacion,
-        capacidad: espacioData.capacidad,
+        name: espacioData.name,
+        state: espacioData.state,
+        ubication: espacioData.ubication,
+        capacity: espacioData.capacity,
+        urlpath: espacioData.urlpath,
       })
       .select()
       .single();
@@ -34,7 +35,7 @@ export class SpacesService {
       );
     }
 
-    const espacioDeporteRecords = deportes_permitidos.map((deporteId) => ({
+    const espacioDeporteRecords = sports.map((deporteId) => ({
       espacio_id: espacio.id,
       deporte_id: deporteId,
     }));
@@ -59,14 +60,15 @@ export class SpacesService {
       .from('espacios')
       .select(`
         id,
-        nombre,
-        estado,
-        ubicacion,
-        capacidad,
+        name,
+        state,
+        ubication,
+        capacity,
+        urlpath,
         espacio_deporte (
           deportes (
             id,
-            nombre
+            name
           )
         )
       `);
@@ -76,10 +78,10 @@ export class SpacesService {
       const userRole = userData?.user?.user_metadata?.rol;
 
       if (userRole !== 'Administrador') {
-        query = query.eq('estado', EstadoEspacio.ACTIVO);
+        query = query.eq('state', EstadoEspacio.ACTIVO);
       }
     } else {
-      query = query.eq('estado', EstadoEspacio.ACTIVO);
+      query = query.eq('state', EstadoEspacio.ACTIVO);
     }
 
     const { data, error } = await query;
@@ -93,18 +95,58 @@ export class SpacesService {
 
     return data.map((espacio: any) => ({
       id: espacio.id,
-      nombre: espacio.nombre,
-      estado: espacio.estado,
-      ubicacion: espacio.ubicacion,
-      capacidad: espacio.capacidad,
-      deportes: espacio.espacio_deporte.map((ed: any) => ed.deportes),
+      name: espacio.name,
+      state: espacio.state,
+      ubication: espacio.ubication,
+      capacity: espacio.capacity,
+      sports: espacio.espacio_deporte.map((ed: any) => ed.deportes),
     }));
+  }
+
+  async getSpaceById(id: number): Promise<SpaceResponseDto> {
+    const { data, error } = await this.supabase
+      .from('espacios')
+      .select(`
+        id,
+        name,
+        state,
+        ubication,
+        capacity,
+        urlpath,
+        espacio_deporte (
+          deportes (
+            id,
+            name
+          )
+        )
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw new NotFoundException(`Espacio con ID ${id} no encontrado`);
+      }
+      throw new InternalServerErrorException(
+        `Error al obtener espacio: ${error.message}`,
+      );
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      state: data.state,
+      ubication: data.ubication,
+      capacity: data.capacity,
+      urlpath: data.urlpath,
+      sports: data.espacio_deporte.map((ed: any) => ed.deportes),
+    };
   }
 
   async activateSpace(id: number): Promise<{ message: string }> {
     const { data, error } = await this.supabase
       .from('espacios')
-      .update({ estado: EstadoEspacio.ACTIVO })
+      .update({ state: EstadoEspacio.ACTIVO })
       .eq('id', id)
       .select()
       .single();
@@ -125,7 +167,7 @@ export class SpacesService {
   async inactivateSpace(id: number): Promise<{ message: string }> {
     const { data, error } = await this.supabase
       .from('espacios')
-      .update({ estado: EstadoEspacio.INACTIVO })
+      .update({ state: EstadoEspacio.INACTIVO })
       .eq('id', id)
       .select()
       .single();
