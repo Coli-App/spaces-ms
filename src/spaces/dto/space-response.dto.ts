@@ -3,7 +3,8 @@ export class SpaceResponseDto {
   name: string;
   state: string;
   ubication: string;
+  description: string;
   capacity: number;
   urlpath?: string;
-  sports?: Array<{ id: number; name: string }>;
+  sports: number[]; 
 }

@@ -3,6 +3,7 @@ export interface Space {
   nombre: string;
   estado: string;
   ubicacion: string;
+  descripcion: string;
   capacidad: number;
   created_at?: Date;
   updated_at?: Date;

@@ -2,29 +2,48 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
-  BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CreateSpaceDto, EstadoEspacio } from './dto/create-space.dto';
 import { SpaceResponseDto } from './dto/space-response.dto';
+import { CloudflareService } from 'src/providers/cloudflare/cloudflare.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SpacesService {
   constructor(
     @Inject('SUPABASE_CLIENT') private readonly supabase: SupabaseClient,
+    private readonly cloudflareService: CloudflareService,
+    private readonly configService: ConfigService,
   ) {}
 
-  async createSpace(createSpaceDto: CreateSpaceDto): Promise<SpaceResponseDto> {
-    const { sports, ...espacioData } = createSpaceDto;
+  async createSpace(
+    createSpaceDto: CreateSpaceDto,
+    image?: Express.Multer.File,
+  ): Promise<SpaceResponseDto> {
+    const { sports, ...spaceData } = createSpaceDto;
+
+    let imageKey = '';
+
+    if (image) {
+      const key = `spaces/${Date.now()}_${image.originalname}`;
+      imageKey = await this.cloudflareService.uploadFile(
+        key,
+        image.buffer,
+        image.mimetype,
+      );
+    }
+
     const { data: espacio, error: espacioError } = await this.supabase
       .from('espacios')
       .insert({
-        name: espacioData.name,
-        state: espacioData.state,
-        ubication: espacioData.ubication,
-        capacity: espacioData.capacity,
-        urlpath: espacioData.urlpath,
+        name: spaceData.name,
+        state: spaceData.state,
+        ubication: spaceData.ubication,
+        description: spaceData.description,
+        capacity: spaceData.capacity,
+        urlpath: imageKey,
       })
       .select()
       .single();
@@ -46,23 +65,27 @@ export class SpacesService {
 
     if (relacionError) {
       await this.supabase.from('espacios').delete().eq('id', espacio.id);
-      
+
       throw new InternalServerErrorException(
         `Error al asociar deportes: ${relacionError.message}`,
       );
     }
 
-    return espacio;
+    return {
+      ...espacio,
+      urlpath: imageKey
+        ? await this.cloudflareService.getFileUrl(imageKey)
+        : null,
+    };
   }
 
   async listSpaces(userToken?: string): Promise<SpaceResponseDto[]> {
-    let query = this.supabase
-      .from('espacios')
-      .select(`
+    let query = this.supabase.from('espacios').select(`
         id,
         name,
         state,
         ubication,
+        description,
         capacity,
         urlpath,
         espacio_deporte (
@@ -75,9 +98,9 @@ export class SpacesService {
 
     if (userToken) {
       const { data: userData } = await this.supabase.auth.getUser(userToken);
-      const userRole = userData?.user?.user_metadata?.rol;
+      const userRole = userData.user?.app_metadata.user_role;
 
-      if (userRole !== 'Administrador') {
+      if (userRole !== 'admin') {
         query = query.eq('state', EstadoEspacio.ACTIVO);
       }
     } else {
@@ -92,25 +115,39 @@ export class SpacesService {
       );
     }
 
+    const spacesWithSignedUrls = await Promise.all(
+      data.map(async (space: any) => {
+        let signedUrl = "";
+        if (space.urlpath) {
+          signedUrl = await this.cloudflareService.getFileUrl(space.urlpath);
+        }
 
-    return data.map((espacio: any) => ({
-      id: espacio.id,
-      name: espacio.name,
-      state: espacio.state,
-      ubication: espacio.ubication,
-      capacity: espacio.capacity,
-      sports: espacio.espacio_deporte.map((ed: any) => ed.deportes),
-    }));
+        return {
+          id: space.id,
+          name: space.name,
+          state: space.state,
+          ubication: space.ubication,
+          description: space.description, 
+          capacity: space.capacity,
+          urlpath: signedUrl,
+          sports: space.espacio_deporte.map((ed: any) => ed.deportes),
+        };
+      }),
+    );
+
+    return spacesWithSignedUrls;
   }
 
   async getSpaceById(id: number): Promise<SpaceResponseDto> {
     const { data, error } = await this.supabase
       .from('espacios')
-      .select(`
+      .select(
+        `
         id,
         name,
         state,
         ubication,
+        description,
         capacity,
         urlpath,
         espacio_deporte (
@@ -119,7 +156,8 @@ export class SpacesService {
             name
           )
         )
-      `)
+      `,
+      )
       .eq('id', id)
       .single();
 
@@ -137,6 +175,7 @@ export class SpacesService {
       name: data.name,
       state: data.state,
       ubication: data.ubication,
+      description: data.description,
       capacity: data.capacity,
       urlpath: data.urlpath,
       sports: data.espacio_deporte.map((ed: any) => ed.deportes),
