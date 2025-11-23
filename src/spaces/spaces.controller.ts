@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Headers, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Headers, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiHeader, ApiParam } from '@nestjs/swagger';
 import { SpacesService } from './spaces.service';
 import { CreateSpaceDto } from './dto/create-space.dto';
+import { UpdateSpaceDto } from './dto/update-space.dto';
 import { ActivateSpaceDto } from './dto/activate-space.dto';
 import { SpaceResponseDto } from './dto/space-response.dto';
 
@@ -149,5 +150,76 @@ export class SpacesController {
     @Body() activateSpaceDto: ActivateSpaceDto,
   ): Promise<{ message: string }> {
     return this.spacesService.inactivateSpace(activateSpaceDto.id);
+  }
+
+  @Put('edit-space/:id')
+  @ApiOperation({ 
+    summary: 'Editar un espacio deportivo',
+    description: 'Actualiza la información de un espacio existente. No se puede modificar el horario.'
+  })
+  @ApiParam({ 
+    name: 'id', 
+    description: 'ID del espacio a editar',
+    type: Number,
+    example: 1
+  })
+  @ApiBody({ type: UpdateSpaceDto })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Espacio actualizado exitosamente',
+    type: SpaceResponseDto 
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'Espacio no encontrado' 
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: 'Datos inválidos' 
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: 'Error interno del servidor' 
+  })
+  async updateSpace(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateSpaceDto: UpdateSpaceDto,
+  ): Promise<SpaceResponseDto> {
+    return this.spacesService.updateSpace(id, updateSpaceDto);
+  }
+
+  @Delete('delete-space/:id')
+  @ApiOperation({ 
+    summary: 'Eliminar un espacio deportivo',
+    description: 'Elimina permanentemente un espacio y todas sus relaciones (deportes y horarios)'
+  })
+  @ApiParam({ 
+    name: 'id', 
+    description: 'ID del espacio a eliminar',
+    type: Number,
+    example: 1
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Espacio eliminado exitosamente',
+    schema: { 
+      type: 'object', 
+      properties: { 
+        message: { type: 'string', example: 'Espacio "Cancha Principal" eliminado exitosamente' } 
+      } 
+    }
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'Espacio no encontrado' 
+  })
+  @ApiResponse({ 
+    status: 500, 
+    description: 'Error interno del servidor' 
+  })
+  async deleteSpace(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ message: string }> {
+    return this.spacesService.deleteSpace(id);
   }
 }

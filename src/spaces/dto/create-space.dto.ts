@@ -1,5 +1,7 @@
-import { IsString, IsNotEmpty, IsNumber, IsArray, IsEnum, ArrayMinSize, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsArray, IsEnum, ArrayMinSize, IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { ScheduleDto } from './schedule.dto';
 
 export enum EstadoEspacio {
   ACTIVO = 'Activo',
@@ -60,4 +62,21 @@ export class CreateSpaceDto {
   @IsString()
   @IsOptional()
   urlpath?: string;
+
+  @ApiProperty({
+    description: 'Horario de disponibilidad del espacio por día de la semana',
+    example: [
+      { day: 1, time_start: '08:00', time_end: '20:00' },
+      { day: 2, time_start: '08:00', time_end: '20:00' },
+      { day: 3, time_start: '08:00', time_end: '20:00' },
+      { day: 4, time_start: '08:00', time_end: '20:00' },
+      { day: 5, time_start: '08:00', time_end: '18:00' }
+    ],
+    type: [ScheduleDto],
+    isArray: true
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ScheduleDto)
+  schedule: ScheduleDto[];
 }
