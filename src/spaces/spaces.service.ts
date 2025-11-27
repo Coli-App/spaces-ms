@@ -73,7 +73,7 @@ export class SpacesService {
 
     return {
       ...espacio,
-      urlpath: imageKey
+      imageUrl: imageKey
         ? await this.cloudflareService.getFileUrl(imageKey)
         : null,
     };
@@ -117,7 +117,7 @@ export class SpacesService {
 
     const spacesWithSignedUrls = await Promise.all(
       data.map(async (space: any) => {
-        let signedUrl = "";
+        let signedUrl = '';
         if (space.urlpath) {
           signedUrl = await this.cloudflareService.getFileUrl(space.urlpath);
         }
@@ -127,9 +127,9 @@ export class SpacesService {
           name: space.name,
           state: space.state,
           ubication: space.ubication,
-          description: space.description, 
+          description: space.description,
           capacity: space.capacity,
-          urlpath: signedUrl,
+          imageUrl: signedUrl,
           sports: space.espacio_deporte.map((ed: any) => ed.deportes),
         };
       }),
@@ -170,6 +170,11 @@ export class SpacesService {
       );
     }
 
+    let signedUrl = '';
+    if (data.urlpath) {
+      signedUrl = await this.cloudflareService.getFileUrl(data.urlpath);
+    }
+
     return {
       id: data.id,
       name: data.name,
@@ -177,7 +182,7 @@ export class SpacesService {
       ubication: data.ubication,
       description: data.description,
       capacity: data.capacity,
-      urlpath: data.urlpath,
+      imageUrl: signedUrl,
       sports: data.espacio_deporte.map((ed: any) => ed.deportes),
     };
   }

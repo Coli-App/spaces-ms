@@ -5,6 +5,6 @@ export class SpaceResponseDto {
   ubication: string;
   description: string;
   capacity: number;
-  urlpath?: string;
+  imageUrl?: string;
   sports: number[]; 
 }
