@@ -24,8 +24,10 @@ export class SpacesService {
     createSpaceDto: CreateSpaceDto,
     image?: Express.Multer.File,
   ): Promise<SpaceResponseDto> {
+   
+  
     const { sports, schedule, ...spaceData } = createSpaceDto;
-
+ 
     let imageKey = '';
 
     if (image) {
@@ -38,16 +40,17 @@ export class SpacesService {
     }
 
 
-  
-    const days = schedule.map(s => s.day);
-    const uniqueDays = new Set(days);
-    if (days.length !== uniqueDays.size) {
-      throw new BadRequestException('No se permiten días duplicados en el horario');
-    }
+    if (schedule && schedule.length > 0) {
+      const days = schedule.map(s => s.day);
+      const uniqueDays = new Set(days);
+      if (days.length !== uniqueDays.size) {
+        throw new BadRequestException('No se permiten días duplicados en el horario');
+      }
 
-    const invalidDays = days.filter(day => day < 0 || day > 6);
-    if (invalidDays.length > 0) {
-      throw new BadRequestException('Los días deben estar entre 0 (Domingo) y 6 (Sábado)');
+      const invalidDays = days.filter(day => day < 0 || day > 6);
+      if (invalidDays.length > 0) {
+        throw new BadRequestException('Los días deben estar entre 0 (Domingo) y 6 (Sábado)');
+      }
     }
 
     const { data: espacio, error: espacioError } = await this.supabase
@@ -69,7 +72,9 @@ export class SpacesService {
       );
     }
 
-    const scheduleMap = new Map(schedule.map(s => [s.day, s]));
+    const scheduleMap = schedule && schedule.length > 0 
+      ? new Map(schedule.map(s => [s.day, s])) 
+      : new Map();
 
     const horariosRecords: Array<{
       id_espacio: number;
@@ -315,7 +320,7 @@ export class SpacesService {
   }
 
   async updateSpace(id: number, updateSpaceDto: UpdateSpaceDto): Promise<SpaceResponseDto> {
-
+  
     const { data: existingSpace } = await this.supabase
       .from('espacios')
       .select('id')
@@ -327,12 +332,15 @@ export class SpacesService {
     }
 
     const { sports, ...espacioData } = updateSpaceDto;
+   
     const updateData: any = {};
     if (espacioData.name !== undefined) updateData.name = espacioData.name;
     if (espacioData.state !== undefined) updateData.state = espacioData.state;
     if (espacioData.ubication !== undefined) updateData.ubication = espacioData.ubication;
+    if (espacioData.description !== undefined) updateData.description = espacioData.description;
     if (espacioData.capacity !== undefined) updateData.capacity = espacioData.capacity;
     if (espacioData.urlpath !== undefined) updateData.urlpath = espacioData.urlpath;
+
 
     if (Object.keys(updateData).length > 0) {
       const { error: updateError } = await this.supabase

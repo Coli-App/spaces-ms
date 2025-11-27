@@ -34,6 +34,16 @@ export class UpdateSpaceDto {
   ubication?: string;
 
   @ApiProperty({
+    description: 'Información detallada sobre el espacio deportivo',
+    example: 'Objetivo de su creación, características principales, y cualquier otra información relevante.',
+    type: String,
+    required: false
+  })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
     description: 'Capacidad máxima de personas',
     example: 22,
     type: Number,

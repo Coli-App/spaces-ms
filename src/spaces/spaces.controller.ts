@@ -211,6 +211,7 @@ export class SpacesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateSpaceDto: UpdateSpaceDto,
   ): Promise<SpaceResponseDto> {
+   
     return this.spacesService.updateSpace(id, updateSpaceDto);
   }
 
