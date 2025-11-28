@@ -319,7 +319,7 @@ export class SpacesService {
     return { message: `Espacio ${data.nombre} inactivado exitosamente` };
   }
 
-  async updateSpace(id: number, updateSpaceDto: UpdateSpaceDto): Promise<SpaceResponseDto> {
+  async updateSpace(id: number, updateSpaceDto: UpdateSpaceDto, image?: Express.Multer.File): Promise<SpaceResponseDto> {
   
     const { data: existingSpace } = await this.supabase
       .from('espacios')
@@ -339,7 +339,18 @@ export class SpacesService {
     if (espacioData.ubication !== undefined) updateData.ubication = espacioData.ubication;
     if (espacioData.description !== undefined) updateData.description = espacioData.description;
     if (espacioData.capacity !== undefined) updateData.capacity = espacioData.capacity;
-    if (espacioData.urlpath !== undefined) updateData.urlpath = espacioData.urlpath;
+ 
+    if (image) {
+      const key = `spaces/${Date.now()}_${image.originalname}`;
+      const imageKey = await this.cloudflareService.uploadFile(
+        key,
+        image.buffer,
+        image.mimetype,
+      );
+      updateData.urlpath = imageKey;
+    } else if (espacioData.urlpath !== undefined) {
+      updateData.urlpath = espacioData.urlpath;
+    }
 
 
     if (Object.keys(updateData).length > 0) {

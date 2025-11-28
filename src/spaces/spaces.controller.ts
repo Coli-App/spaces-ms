@@ -179,9 +179,10 @@ export class SpacesController {
   }
 
   @Put('edit-space/:id')
+  @UseInterceptors(FileInterceptor('image'))
   @ApiOperation({ 
     summary: 'Editar un espacio deportivo',
-    description: 'Actualiza la información de un espacio existente. No se puede modificar el horario.'
+    description: 'Actualiza la información de un espacio existente. No se puede modificar el horario. Opcionalmente puedes enviar una nueva imagen.'
   })
   @ApiParam({ 
     name: 'id', 
@@ -209,10 +210,11 @@ export class SpacesController {
   })
   async updateSpace(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateSpaceDto: UpdateSpaceDto,
+    @UploadedFile() image: Express.Multer.File,
+    @Body('data') data: string,
   ): Promise<SpaceResponseDto> {
-   
-    return this.spacesService.updateSpace(id, updateSpaceDto);
+    const dto = data ? JSON.parse(data) : {};
+    return this.spacesService.updateSpace(id, dto, image);
   }
 
   @Delete('delete-space/:id')

@@ -66,7 +66,7 @@ export class UpdateSpaceDto {
   sports?: number[];
 
   @ApiProperty({
-    description: 'URL o ruta de la imagen del espacio',
+    description: 'URL o ruta de la imagen del espacio (se actualiza automáticamente al enviar archivo)',
     example: '/spaces/cancha-futbol-principal',
     type: String,
     required: false
